@@ -6,7 +6,7 @@ Looks through your digital library (PDFs and other file types) and builds a "Boo
 
 ## How it could look in Obsidian
 
-<img width="1048" height="915" alt="image" src="https://github.com/user-attachments/assets/db937f4b-23c1-4c1c-8f1e-401b5a1352b2" />
+<img width="888" height="732" alt="image" src="https://github.com/user-attachments/assets/b0a29cb2-54b8-4fb0-9f63-e71e34c2d3db" />
 
 ## How it works
 
