@@ -20,8 +20,65 @@ function usage(commandExample = "genbookstoread.js /path/to/source-folder [outpu
     [
       "Usage:",
       `  ${commandExample}`,
+      "",
+      "You can pass either:",
+      "  - a book folder path",
+      "  - an Obsidian note path whose frontmatter contains source: \"/path/to/books\"",
     ].join("\n")
   );
+}
+
+function parseFrontmatterSource(markdown) {
+  const frontmatterMatch = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+  if (!frontmatterMatch) return null;
+
+  const sourceMatch = frontmatterMatch[1].match(/^source\s*:\s*(.*)$/m);
+  if (!sourceMatch) return null;
+
+  let source = sourceMatch[1].trim();
+  if (!source) return "";
+
+  if (
+    (source.startsWith('"') && source.endsWith('"')) ||
+    (source.startsWith("'") && source.endsWith("'"))
+  ) {
+    source = source.slice(1, -1);
+  }
+
+  return source.trim();
+}
+
+function resolveSourceInput(inputPath) {
+  if (!fs.existsSync(inputPath)) {
+    fail(`Error: '${inputPath}' does not exist`, 2);
+  }
+
+  const stats = fs.statSync(inputPath);
+  if (stats.isDirectory()) {
+    return inputPath;
+  }
+
+  if (stats.isFile()) {
+    const note = fs.readFileSync(inputPath, "utf8");
+    const source = parseFrontmatterSource(note);
+
+    if (source === null) {
+      fail(
+        `Error: '${inputPath}' is a file. If this is an Obsidian note, add a frontmatter line like source: "/path/to/your/book/folder"`,
+        2
+      );
+    }
+
+    if (source === "") {
+      fail(`Error: '${inputPath}' has an empty frontmatter source value`, 2);
+    }
+
+    return path.isAbsolute(source)
+      ? source
+      : path.resolve(path.dirname(inputPath), source);
+  }
+
+  fail(`Error: '${inputPath}' is not a folder`, 2);
 }
 
 function parseNameMeta(entryName, kind) {
@@ -177,7 +234,7 @@ async function main(args = process.argv.slice(2), commandExample = "genbookstore
     process.exit(1);
   }
 
-  const source = path.resolve(args[0]);
+  const source = resolveSourceInput(path.resolve(args[0]));
   const markdown = await generateReadingList(source);
 
   if (args[1]) {
