@@ -31,7 +31,7 @@ These labels map to the generated section headings like this:
 - `[In Progress]` → `Currently Reading`
 - `[To Do]` → `Reading Next`
 - `[Complete]` → `Read`
-- `[Not Complete]` → `Did Not Finish`
+- `[Not Complete]` → `Read` → `Did Not Finish`
 
 ## A couple of things to know
 
@@ -118,7 +118,7 @@ genbookstoread-windows.bat --source C:\Users\YourName\Documents\MyBooks --out C:
 
 ### What you get
 
-The script produces a Markdown document with sections for Currently Reading, Reading Next, Read, Did Not Finish, and Excluded books, organized by subfolder, with a clickable link and status indicator for each book. It also writes `source:` and `lastupdated:` into the document's frontmatter automatically, with `lastupdated:` stored in your current local time zone.
+The script produces a Markdown document with sections for Currently Reading, Reading Next, Read, and Excluded books, organized by subfolder, with `Did Not Finish` nested under `Read`, plus a clickable link and status indicator for each book. It also writes `source:` and `lastupdated:` into the document's frontmatter automatically, with `lastupdated:` stored in your current local time zone.
 
 ---
 

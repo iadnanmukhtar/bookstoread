@@ -198,13 +198,19 @@ function renderBookLine(file, status, displayName) {
   return `${getCheckbox(status)} [${displayName.replace(/`/g, "")}](${uri})\n`;
 }
 
-function renderSection(title, entries) {
-  if (entries.length === 0) return "";
-
-  let output = `## ${title}\n\n`;
+function renderEntries(entries) {
+  let output = "";
   for (const { file, status, displayName } of entries) {
     output += renderBookLine(file, status, displayName);
   }
+  return output;
+}
+
+function renderSection(title, entries, level = 2) {
+  if (entries.length === 0) return "";
+
+  let output = `${"#".repeat(level)} ${title}\n\n`;
+  output += renderEntries(entries);
   output += "\n";
   return output;
 }
@@ -301,8 +307,17 @@ async function generateReadingList(root) {
     output += "\n";
   }
 
-  output += renderSection("Read", completeFiles);
-  output += renderSection("Did Not Finish", partiallyCompleteFiles);
+  if (completeFiles.length > 0 || partiallyCompleteFiles.length > 0) {
+    output += "## Read\n\n";
+
+    if (completeFiles.length > 0) {
+      output += renderEntries(completeFiles);
+      output += "\n";
+    }
+
+    output += renderSection("Did Not Finish", partiallyCompleteFiles, 3);
+  }
+
   output += renderSection("Exclude", excludedFiles);
 
   return output;
