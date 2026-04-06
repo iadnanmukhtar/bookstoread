@@ -146,3 +146,7 @@ If you use Obsidian, you can wire this script up to run with a single click usin
 4. Save when prompted.
 
 Whenever you add new books or update labels, just run the command again to refresh the list.
+
+# Sample look in Obsidian
+
+<img width="1048" height="915" alt="image" src="https://github.com/user-attachments/assets/db937f4b-23c1-4c1c-8f1e-401b5a1352b2" />
