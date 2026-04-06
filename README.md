@@ -1,3 +1,7 @@
+Here's the version without emojis:
+
+---
+
 # Books to Read
 
 ## What this script does
@@ -53,6 +57,11 @@ Use `genbookstoread.js` as your main script. It's set up to run directly as `./g
 
 ## Running the script
 
+You can point the script at your books in one of two ways:
+
+- Give it the path to your book folder directly.
+- Give it the path to an Obsidian note that has your book folder path stored in its frontmatter (under `source:`). This is the recommended approach if you use Obsidian.
+
 ### Mac
 
 **Just see the list in Terminal:**
@@ -89,7 +98,7 @@ genbookstoread-windows.bat C:\Users\YourName\Documents\MyBooks C:\Users\YourName
 
 ### What the two inputs mean
 
-- **Your book folder** (required): The folder where your book files live.
+- **Source input** (required): Either the folder where your book files live, or an Obsidian note whose `source:` value points to that folder.
 - **Output file** (optional): Where to save the generated list. Leave this out and it prints to the screen instead.
 
 ### What you get
@@ -110,18 +119,19 @@ If you use Obsidian, you can wire this script up to run with a single click usin
 
 2. **Create a template note:**
    - Make a new note in your vault, for example `Books to Read.md`
-   - Add this at the very top:
+   - Add this at the very top, replacing the path with your actual book folder:
      ```yaml
      ---
      type: "Books to Read"
-     source: ""
+     source: "/path/to/your/book/folder"
      ---
      ```
    - Leave the rest blank, or add a line like "Generating..." as a placeholder. The script will replace it when you run the command.
 
 3. **Set up the shell command:**
    - Go to Settings → Shell commands and click "Add command"
-   - In the Command field, enter the full path to the script, followed by the active file variable. The paths below are examples showing where you might have saved the script.
+   - In the Command field, enter the full path to the script, followed by the active file variable. When you run the command, the script reads the `source:` value from the note's frontmatter to find your book folder.
+   - The paths below are just examples showing where you might have saved the script. Swap in your actual location.
 
    **Mac:**
    ```
@@ -133,7 +143,6 @@ If you use Obsidian, you can wire this script up to run with a single click usin
    C:\Users\YourName\bin\genbookstoread-windows.bat {{file_path:absolute}}
    ```
 
-   - Swap in the actual location where you saved the script.
    - Under "Show in," pick Editor menu or File menu so it's easy to find.
    - Turn on "Save output to active file" so the generated list replaces your template.
    - Give it a name like "Generate Books to Read."
@@ -142,11 +151,11 @@ If you use Obsidian, you can wire this script up to run with a single click usin
 
 1. Open your `Books to Read.md` note.
 2. Right-click in the editor (or use the file menu) and choose your shell command.
-3. The note fills in with your current book list organized by status and folder.
+3. The script reads the `source:` path from the note's frontmatter, scans that folder, and writes the generated list back into the note.
 4. Save when prompted.
 
 Whenever you add new books or update labels, just run the command again to refresh the list.
 
-# Sample look in Obsidian
+### Sample Obsidian Screenshot
 
 <img width="1048" height="915" alt="image" src="https://github.com/user-attachments/assets/db937f4b-23c1-4c1c-8f1e-401b5a1352b2" />
