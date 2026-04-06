@@ -15,15 +15,19 @@ function fail(message, code = 1) {
   process.exit(code);
 }
 
-function usage(commandExample = "genbookstoread.js /path/to/source-folder [output.md]") {
+function usage(commandExamples = ["genbookstoread.js --source /path/to/source-folder"]) {
   console.error(
     [
       "Usage:",
-      `  ${commandExample}`,
+      ...commandExamples.map((example) => `  ${example}`),
       "",
-      "You can pass either:",
-      "  - a book folder path",
-      "  - an Obsidian note path whose frontmatter contains source: \"/path/to/books\"",
+      "Source selection:",
+      "  - pass --source <folder>, or",
+      "  - pass --out <existing-note.md> where the file already has frontmatter source: \"/path/to/folder\"",
+      "",
+      "Optional:",
+      "  --out <file>         Markdown output file. Leave this out to write to stdout.",
+      "  --help               Show this help message.",
     ].join("\n")
   );
 }
@@ -48,7 +52,7 @@ function parseFrontmatterSource(markdown) {
   return source.trim();
 }
 
-function resolveSourceInput(inputPath) {
+function resolveSourceFolder(inputPath) {
   if (!fs.existsSync(inputPath)) {
     fail(`Error: '${inputPath}' does not exist`, 2);
   }
@@ -58,27 +62,72 @@ function resolveSourceInput(inputPath) {
     return inputPath;
   }
 
-  if (stats.isFile()) {
-    const note = fs.readFileSync(inputPath, "utf8");
-    const source = parseFrontmatterSource(note);
+  fail(`Error: '${inputPath}' is not a folder`, 2);
+}
 
-    if (source === null) {
-      fail(
-        `Error: '${inputPath}' is a file. If this is an Obsidian note, add a frontmatter line like source: "/path/to/your/book/folder"`,
-        2
-      );
+function resolveSourceFromExistingOutput(outputPath) {
+  if (!outputPath || !fs.existsSync(outputPath)) return null;
+
+  const stats = fs.statSync(outputPath);
+  if (!stats.isFile()) return null;
+
+  const markdown = fs.readFileSync(outputPath, "utf8");
+  const source = parseFrontmatterSource(markdown);
+  if (source === null || source === "") return null;
+
+  return path.isAbsolute(source)
+    ? source
+    : path.resolve(path.dirname(outputPath), source);
+}
+
+function parseCliArgs(args) {
+  const options = {
+    out: null,
+    source: null,
+  };
+
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+
+    if (arg === "--help") {
+      options.help = true;
+      continue;
     }
 
-    if (source === "") {
-      fail(`Error: '${inputPath}' has an empty frontmatter source value`, 2);
+    if (arg === "--source" || arg === "-s") {
+      const value = args[i + 1];
+      if (!value || value.startsWith("-")) {
+        fail("Error: --source requires a folder path", 1);
+      }
+      options.source = value;
+      i += 1;
+      continue;
     }
 
-    return path.isAbsolute(source)
-      ? source
-      : path.resolve(path.dirname(inputPath), source);
+    if (arg.startsWith("--source=")) {
+      options.source = arg.slice("--source=".length);
+      continue;
+    }
+
+    if (arg === "--out" || arg === "-o") {
+      const value = args[i + 1];
+      if (!value || value.startsWith("-")) {
+        fail("Error: --out requires a file path", 1);
+      }
+      options.out = value;
+      i += 1;
+      continue;
+    }
+
+    if (arg.startsWith("--out=")) {
+      options.out = arg.slice("--out=".length);
+      continue;
+    }
+
+    fail(`Error: Unknown argument '${arg}'`, 1);
   }
 
-  fail(`Error: '${inputPath}' is not a folder`, 2);
+  return options;
 }
 
 function parseNameMeta(entryName, kind) {
@@ -156,6 +205,28 @@ function renderSection(title, entries) {
   return output;
 }
 
+function padNumber(value, length = 2) {
+  return String(value).padStart(length, "0");
+}
+
+function formatLocalTimestamp(date = new Date()) {
+  const year = date.getFullYear();
+  const month = padNumber(date.getMonth() + 1);
+  const day = padNumber(date.getDate());
+  const hours = padNumber(date.getHours());
+  const minutes = padNumber(date.getMinutes());
+  const seconds = padNumber(date.getSeconds());
+  const milliseconds = padNumber(date.getMilliseconds(), 3);
+
+  const offsetMinutes = -date.getTimezoneOffset();
+  const sign = offsetMinutes >= 0 ? "+" : "-";
+  const absoluteOffsetMinutes = Math.abs(offsetMinutes);
+  const offsetHours = padNumber(Math.floor(absoluteOffsetMinutes / 60));
+  const offsetRemainderMinutes = padNumber(absoluteOffsetMinutes % 60);
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}${sign}${offsetHours}:${offsetRemainderMinutes}`;
+}
+
 async function generateReadingList(root) {
   if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) {
     fail(`Error: '${root}' is not a folder`, 2);
@@ -191,8 +262,9 @@ async function generateReadingList(root) {
 
   const folders = Array.from(byFolder.keys()).sort((a, b) => collator.compare(a, b));
   const rootTitle = parseNameMeta(path.basename(root), "directory").cleanName.replace(/`/g, "");
+  const lastUpdated = formatLocalTimestamp();
 
-  let output = `---\ntype: "Books to Read"\nsource: ${JSON.stringify(root)}\n---\n\n`;
+  let output = `---\ntype: "Books to Read"\nsource: ${JSON.stringify(root)}\nlastupdated: ${JSON.stringify(lastUpdated)}\n---\n\n`;
   output += renderSection("In Progress", inProgressFiles);
   output += renderSection("To Do", todoFiles);
   output += `# ${rootTitle}\n\n`;
@@ -228,17 +300,37 @@ async function generateReadingList(root) {
   return output;
 }
 
-async function main(args = process.argv.slice(2), commandExample = "genbookstoread.js /path/to/source-folder [output.md]") {
-  if (args.length < 1 || args.length > 2) {
-    usage(commandExample);
+async function main(
+  args = process.argv.slice(2),
+  commandExamples = [
+    "genbookstoread.js --source /path/to/source-folder",
+    "genbookstoread.js --source /path/to/source-folder --out output.md",
+    "genbookstoread.js --out existing-note.md",
+  ]
+) {
+  const options = parseCliArgs(args);
+
+  if (options.help) {
+    usage(commandExamples);
+    process.exit(0);
+  }
+
+  const outputFile = options.out ? path.resolve(options.out) : null;
+  const sourcePath = options.source
+    ? path.resolve(options.source)
+    : resolveSourceFromExistingOutput(outputFile);
+
+  if (!sourcePath) {
+    usage(commandExamples);
+    console.error("");
+    console.error("Error: pass --source, or point --out at an existing file with frontmatter source: \"/path/to/folder\"");
     process.exit(1);
   }
 
-  const source = resolveSourceInput(path.resolve(args[0]));
+  const source = resolveSourceFolder(sourcePath);
   const markdown = await generateReadingList(source);
 
-  if (args[1]) {
-    const outputFile = path.resolve(args[1]);
+  if (outputFile) {
     fs.writeFileSync(outputFile, markdown, "utf8");
     return;
   }

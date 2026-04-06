@@ -1,16 +1,12 @@
-Here's the version without emojis:
-
----
-
 # Books to Read
 
 ## What this script does
 
-Looks through your digital book collection (PDFs and other file types) and builds a "Books to Read" document in Markdown format. It helps you keep track of what you're currently reading, what's up next, and what you've already finished.
+Looks through your digital library (PDFs and other file types) and builds a "Books to Read" document in Markdown format. It helps you keep track of what you're currently reading, what's up next, and what you've already finished.
 
 ## How it works
 
-- Walks through your book folder and all its subfolders.
+- Walks through your digital library folder and all its subfolders.
 - Figures out the reading status of each book based on labels you've added to the file or folder name.
 - Produces a neatly organized document grouped by status and folder.
 - Saves the result to a file, or just prints it to the screen if you don't specify one.
@@ -49,6 +45,8 @@ Use `genbookstoread.js` as your main script. It's set up to run directly as `./g
 
 ### Windows
 
+> **Note:** The Windows version has not been tested. The instructions below are provided as a guide, but you may run into issues. If something doesn't work, check that Node.js is installed and that both script files are in the same folder.
+
 1. Make sure Node.js (version 12 or higher) is installed on your computer.
 2. Put `genbookstoread-windows.bat` and `genbookstoread-windows.js` in the same folder. You don't need `chmod +x` on Windows.
 3. Use `genbookstoread-windows.bat` as your launcher. It calls the `.js` file for you, so you don't need to type `node` each time.
@@ -57,53 +55,57 @@ Use `genbookstoread.js` as your main script. It's set up to run directly as `./g
 
 ## Running the script
 
-You can point the script at your books in one of two ways:
+The script takes two options:
 
-- Give it the path to your book folder directly.
-- Give it the path to an Obsidian note that has your book folder path stored in its frontmatter (under `source:`). This is the recommended approach if you use Obsidian.
+- `--source` tells it which folder to scan.
+- `--out` tells it where to save the output file.
+
+If you leave out `--out`, the list prints to the screen. If you leave out `--source`, the script will look for a `source:` path inside the frontmatter of your existing `--out` file and use that instead.
 
 ### Mac
 
 **Just see the list in Terminal:**
 ```bash
-./genbookstoread.js ~/Documents/MyBooks
+./genbookstoread.js --source ~/Documents/MyBooks
 ```
 
 **Save the list to a file:**
 ```bash
-./genbookstoread.js ~/Documents/MyBooks reading-list.md
+./genbookstoread.js --source ~/Documents/MyBooks --out reading-list.md
 ```
 
 **Save it to a specific location:**
 ```bash
-./genbookstoread.js ~/Documents/MyBooks ~/Output/my-reading-list.md
+./genbookstoread.js --source ~/Documents/MyBooks --out ~/Output/my-reading-list.md
 ```
 
 ### Windows
 
+> **Note:** The Windows version has not been tested.
+
 **Just see the list in PowerShell:**
 ```powershell
-genbookstoread-windows.bat C:\Users\YourName\Documents\MyBooks
+genbookstoread-windows.bat --source C:\Users\YourName\Documents\MyBooks
 ```
 
 **Save it to a file:**
 ```powershell
-genbookstoread-windows.bat C:\Users\YourName\Documents\MyBooks reading-list.md
+genbookstoread-windows.bat --source C:\Users\YourName\Documents\MyBooks --out reading-list.md
 ```
 
 **Save it to a specific location:**
 ```powershell
-genbookstoread-windows.bat C:\Users\YourName\Documents\MyBooks C:\Users\YourName\Output\my-reading-list.md
+genbookstoread-windows.bat --source C:\Users\YourName\Documents\MyBooks --out C:\Users\YourName\Output\my-reading-list.md
 ```
 
-### What the two inputs mean
+### What the options mean
 
-- **Source input** (required): Either the folder where your book files live, or an Obsidian note whose `source:` value points to that folder.
-- **Output file** (optional): Where to save the generated list. Leave this out and it prints to the screen instead.
+- `--source` (required, unless your `--out` file already has a `source:` value in its frontmatter): The folder where your digital library lives.
+- `--out` (optional): Where to save the generated list. Leave it out and the list prints to the screen instead.
 
 ### What you get
 
-The script produces a Markdown document with sections for In Progress, To Do, Complete, and Excluded books, organized by subfolder, with a clickable link and status indicator for each book.
+The script produces a Markdown document with sections for In Progress, To Do, Complete, and Excluded books, organized by subfolder, with a clickable link and status indicator for each book. It also writes `source:` and `lastupdated:` into the document's frontmatter automatically, with `lastupdated:` stored in your current local time zone.
 
 ---
 
@@ -119,28 +121,38 @@ If you use Obsidian, you can wire this script up to run with a single click usin
 
 2. **Create a template note:**
    - Make a new note in your vault, for example `Books to Read.md`
-   - Add this at the very top, replacing the path with your actual book folder:
+   - Add this at the very top, replacing the path with the actual location of your digital library:
      ```yaml
      ---
      type: "Books to Read"
-     source: "/path/to/your/book/folder"
+     source: "/path/to/your/digital-library"
      ---
      ```
-   - Leave the rest blank, or add a line like "Generating..." as a placeholder. The script will replace it when you run the command.
+   - Leave the rest blank, or add a line like "Generating..." as a placeholder. The script will replace it when you run the command. The `source:` path and `lastupdated:` value are preserved and updated automatically each time using your current local time zone.
 
 3. **Set up the shell command:**
    - Go to Settings → Shell commands and click "Add command"
-   - In the Command field, enter the full path to the script, followed by the active file variable. When you run the command, the script reads the `source:` value from the note's frontmatter to find your book folder.
-   - The paths below are just examples showing where you might have saved the script. Swap in your actual location.
+   - In the Command field, enter the full path to the script along with `--out` pointing to the active note. If the note already has a `source:` value in its frontmatter, you can leave out `--source`. If it doesn't yet, include `--source` with the path to your digital library.
+   - The paths below are just examples. Swap in the actual location where you saved the script.
 
-   **Mac:**
+   **Mac, using the note's existing `source:` frontmatter:**
    ```
-   /Users/yourname/bin/genbookstoread.js {{file_path:absolute}}
+   /Users/yourname/bin/genbookstoread.js --out {{file_path:absolute}}
    ```
 
-   **Windows:**
+   **Mac, setting the source folder explicitly:**
    ```
-   C:\Users\YourName\bin\genbookstoread-windows.bat {{file_path:absolute}}
+   /Users/yourname/bin/genbookstoread.js --out {{file_path:absolute}} --source /path/to/your/digital-library
+   ```
+
+   **Windows, using the note's existing `source:` frontmatter:**
+   ```
+   C:\Users\YourName\bin\genbookstoread-windows.bat --out {{file_path:absolute}}
+   ```
+
+   **Windows, setting the source folder explicitly:**
+   ```
+   C:\Users\YourName\bin\genbookstoread-windows.bat --out {{file_path:absolute}} --source C:\path\to\your\digital-library
    ```
 
    - Under "Show in," pick Editor menu or File menu so it's easy to find.
@@ -151,7 +163,7 @@ If you use Obsidian, you can wire this script up to run with a single click usin
 
 1. Open your `Books to Read.md` note.
 2. Right-click in the editor (or use the file menu) and choose your shell command.
-3. The script reads the `source:` path from the note's frontmatter, scans that folder, and writes the generated list back into the note.
+3. The script finds your digital library folder from `--source`, or from the note's existing `source:` frontmatter if you left `--source` out, then writes the generated list into the note.
 4. Save when prompted.
 
 Whenever you add new books or update labels, just run the command again to refresh the list.

@@ -7,13 +7,23 @@
  * Keep this file in the same folder as genbookstoread-windows.bat.
  *
  * Direct usage:
- *   node genbookstoread-windows.js C:\path\to\your\book\folder [output.md]
+ *   node genbookstoread-windows.js --source C:\path\to\your\book\folder
+ *   node genbookstoread-windows.js --source C:\path\to\your\book\folder --out output.md
+ *   node genbookstoread-windows.js --out existing-note.md
+ *
+ * If you omit --source, then --out must point to an existing note whose
+ * frontmatter already contains:
+ *   source: "/path/to/your/book/folder"
  */
 const { fail, main } = require("./genbookstoread-core");
 
 main(
   process.argv.slice(2),
-  "node genbookstoread-windows.js C:\\path\\to\\your\\book\\folder [output.md]"
+  [
+    "node genbookstoread-windows.js --source C:\\path\\to\\your\\book\\folder",
+    "node genbookstoread-windows.js --source C:\\path\\to\\your\\book\\folder --out output.md",
+    "node genbookstoread-windows.js --out existing-note.md",
+  ]
 ).catch((err) => {
   fail(`Error: ${err.message}`, 3);
 });
