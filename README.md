@@ -1,7 +1,3 @@
-Here's the updated version with clearer Mac/Windows headings throughout:
-
----
-
 # Books to Read
 
 ## What this script does
