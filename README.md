@@ -4,6 +4,10 @@
 
 Looks through your digital library (PDFs and other file types) and builds a "Books to Read" document in Markdown format. It helps you keep track of what you're currently reading, what's up next, and what you've already finished.
 
+## How it could look in Obsidian
+
+<img width="1048" height="915" alt="image" src="https://github.com/user-attachments/assets/db937f4b-23c1-4c1c-8f1e-401b5a1352b2" />
+
 ## How it works
 
 - Walks through your digital library folder and all its subfolders.
@@ -167,7 +171,3 @@ If you use Obsidian, you can wire this script up to run with a single click usin
 4. Save when prompted.
 
 Whenever you add new books or update labels, just run the command again to refresh the list.
-
-### Sample Obsidian Screenshot
-
-<img width="1048" height="915" alt="image" src="https://github.com/user-attachments/assets/db937f4b-23c1-4c1c-8f1e-401b5a1352b2" />
