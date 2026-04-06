@@ -7,8 +7,9 @@ const SUFFIX_TO_STATUS = {
   "In Progress": "in-progress",
   "To Do": "todo",
   Complete: "complete",
+  "Not Complete": "partially-complete",
 };
-const MANAGED_SUFFIX_PATTERN = / \[(In Progress|To Do|Complete|Exclude)\]$/;
+const MANAGED_SUFFIX_PATTERN = / \[(In Progress|To Do|Complete|Not Complete|Exclude)\]$/;
 
 function fail(message, code = 1) {
   console.error(message);
@@ -161,6 +162,8 @@ async function* walk(dir, inheritedExclude = false) {
   entries.sort((a, b) => collator.compare(a.name, b.name));
 
   for (const entry of entries) {
+    if (entry.name.startsWith(".")) continue;
+
     const full = path.join(dir, entry.name);
     const kind = entry.isDirectory() ? "directory" : "file";
     const meta = parseNameMeta(entry.name, kind);
@@ -186,6 +189,7 @@ function getCheckbox(status) {
   if (status === "complete") return "- [x]";
   if (status === "in-progress") return "- [/]";
   if (status === "todo") return "- [>]";
+  if (status === "partially-complete") return "- [-]";
   return "- [ ]";
 }
 
@@ -236,6 +240,7 @@ async function generateReadingList(root) {
   const inProgressFiles = [];
   const todoFiles = [];
   const completeFiles = [];
+  const partiallyCompleteFiles = [];
   const excludedFiles = [];
 
   for await (const entry of walk(root)) {
@@ -257,6 +262,8 @@ async function generateReadingList(root) {
       todoFiles.push(entry);
     } else if (entry.status === "complete") {
       completeFiles.push(entry);
+    } else if (entry.status === "partially-complete") {
+      partiallyCompleteFiles.push(entry);
     }
   }
 
@@ -265,8 +272,8 @@ async function generateReadingList(root) {
   const lastUpdated = formatLocalTimestamp();
 
   let output = `---\ntype: "Books to Read"\nsource: ${JSON.stringify(root)}\nlastupdated: ${JSON.stringify(lastUpdated)}\n---\n\n`;
-  output += renderSection("In Progress", inProgressFiles);
-  output += renderSection("To Do", todoFiles);
+  output += renderSection("Currently Reading", inProgressFiles);
+  output += renderSection("Reading Next", todoFiles);
   output += `# ${rootTitle}\n\n`;
 
   if (byFolder.has("")) {
@@ -294,7 +301,8 @@ async function generateReadingList(root) {
     output += "\n";
   }
 
-  output += renderSection("Complete", completeFiles);
+  output += renderSection("Read", completeFiles);
+  output += renderSection("Did Not Finish", partiallyCompleteFiles);
   output += renderSection("Exclude", excludedFiles);
 
   return output;
